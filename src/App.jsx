@@ -5,9 +5,8 @@ import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminGuard from './components/AdminGuard'
 import Login from './pages/auth/Login'
-import Registro from './pages/auth/Registro'
-import InventarioList from './pages/inventario/InventarioList'
 import AdminPanel from './pages/admin/AdminPanel'
+import OperadorPanel from './pages/operador/OperadorPanel'
 
 function App() {
   return (
@@ -15,16 +14,15 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/inventario" element={
-          <AdminGuard>
-            <InventarioList />
-          </AdminGuard>
-        } />
         <Route path="/admin" element={
           <AdminGuard>
             <AdminPanel />
           </AdminGuard>
+        } />
+        <Route path="/operador" element={
+          <ProtectedRoute>
+            <OperadorPanel />
+          </ProtectedRoute>
         } />
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
