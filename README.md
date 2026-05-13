@@ -47,7 +47,7 @@ Authorization: Bearer <token>
 
 ## Instalación y ejecución
 ```bash   
-git clone https://github.com/cori-roa/Smartlogix-frontend-Saldivar-Roa.git  
+git clone (url del repositorio)  
 cd Smartlogix-frontend-Saldivar-Roa
 npm install
 npm run dev
