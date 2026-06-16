@@ -4,88 +4,60 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import apiClient from '../../api/apiClient'
 import InventarioForm from '../inventario/InventarioForm'
-import { IconGrid, IconBox, IconUser, IconLogout, IconPlus, IconRefresh, IconEdit, IconTrash, IconMapPin, IconSearch, IconWarning, IconBuilding } from '../../components/Icons'
+import {
+  IconGrid, IconBox, IconUser, IconLogout, IconPlus,
+  IconRefresh, IconEdit, IconTrash, IconMapPin, IconSearch,
+  IconWarning, IconBuilding, IconShoppingCart, IconTruck
+} from '../../components/Icons'
 
-const CATS = ['TODAS', 'ELECTRONICO', 'ROPA', 'CALZADO', 'HOGAR', 'DEPORTES', 'ALIMENTOS', 'OTROS']
+const CATS = ['TODAS','ELECTRONICO','ROPA','CALZADO','HOGAR','DEPORTES','ALIMENTOS','OTROS']
+
+const badgeEstadoPedido = (e) => ({
+  PENDIENTE:'badge-yellow', CONFIRMADO:'badge-blue', EN_PROCESO:'badge-blue',
+  ENVIADO:'badge-blue', ENTREGADO:'badge-green', CANCELADO:'badge-red'
+}[e] || 'badge-gray')
+
+const badgeEstadoEnvio = (e) => ({
+  PREPARANDO:'badge-yellow', EN_TRANSITO:'badge-blue', EN_DESTINO:'badge-blue',
+  ENTREGADO:'badge-green', FALLIDO:'badge-red'
+}[e] || 'badge-gray')
 
 function ModalStockEdit({ sucursal, productos, stockActual, onGuardar, onCerrar }) {
-  const [stocks, setStocks] = useState(productos.map(p => { const s = stockActual.find(s => s.producto?.id === p.id); return { productoId: p.id, nombre: p.nombre, sku: p.sku, cantidad: s?.cantidad ?? 0 } }))
+  const [stocks, setStocks] = useState(
+      productos.map(p => {
+        const s = stockActual.find(s => s.producto?.id === p.id)
+        return { productoId: p.id, nombre: p.nombre, sku: p.sku, cantidad: s?.cantidad ?? 0 }
+      })
+  )
   const set = (id, val) => setStocks(st => st.map(s => s.productoId === id ? { ...s, cantidad: parseInt(val) || 0 } : s))
   return (
-    <div className="modal-overlay">
-      <div className="modal modal-lg">
-        <div className="modal-header">
-          <div>
-            <div className="modal-title">Gestión de stock</div>
-            <div className="modal-subtitle">{sucursal.nombre} — ajusta las cantidades por producto</div>
+      <div className="modal-overlay">
+        <div className="modal modal-lg">
+          <div className="modal-header">
+            <div>
+              <div className="modal-title">Gestión de stock</div>
+              <div className="modal-subtitle">{sucursal.nombre} — ajusta las cantidades</div>
+            </div>
+            <button className="modal-close" onClick={onCerrar}>✕</button>
           </div>
-          <button className="modal-close" onClick={onCerrar}>✕</button>
-        </div>
-        <table className="data-table">
-          <thead><tr><th>SKU</th><th>Producto</th><th style={{ width: 170 }}>Cantidad</th></tr></thead>
-          <tbody>
-            {stocks.map(s => (
-              <tr key={s.productoId}>
-                <td><span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--c-accent)' }}>{s.sku}</span></td>
-                <td className="cell-primary">{s.nombre}</td>
-                <td><input type="number" className="form-input" value={s.cantidad} min="0" onChange={e => set(s.productoId, e.target.value)} style={{ padding: '5px 9px' }} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onCerrar}>Cancelar</button>
-          <button className="btn btn-primary" onClick={() => onGuardar(stocks)}>Guardar cambios</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ModalStockVer({ producto, sucursales, onCerrar }) {
-  const [stocks, setStocks] = useState([])
-  const [cargando, setCargando] = useState(true)
-  useEffect(() => {
-    apiClient.get(`/api/sucursales/producto/${producto.id}`).then(r => setStocks(r.data)).catch(() => toast.error('Error')).finally(() => setCargando(false))
-  }, [producto.id])
-  return (
-    <div className="modal-overlay">
-      <div className="modal">
-        <div className="modal-header">
-          <div>
-            <div className="modal-title">Stock por sucursal</div>
-            <div className="modal-subtitle">{producto.nombre} · Stock total: {producto.cantidad} uds</div>
-          </div>
-          <button className="modal-close" onClick={onCerrar}>✕</button>
-        </div>
-        {cargando ? <div className="loading-state"><span className="spinner" /></div> : (
           <table className="data-table">
-            <thead><tr><th>Sucursal</th><th>Ciudad</th><th>Cantidad</th><th>Estado</th></tr></thead>
+            <thead><tr><th>SKU</th><th>Producto</th><th style={{width:170}}>Cantidad</th></tr></thead>
             <tbody>
-              {sucursales.map(suc => {
-                const s = stocks.find(st => st.sucursal?.id === suc.id)
-                const cant = s?.cantidad ?? 0
-                return (
-                  <tr key={suc.id}>
-                    <td className="cell-primary">{suc.nombre}</td>
-                    <td className="cell-muted">{suc.ciudad}</td>
-                    <td style={{ fontWeight: 600 }}>{cant}</td>
-                    <td>
-                      {cant === 0 ? <span className="badge badge-red"><span className="badge-dot" />Sin stock</span>
-                        : cant <= 5 ? <span className="badge badge-yellow"><span className="badge-dot" />Bajo</span>
-                        : <span className="badge badge-green"><span className="badge-dot" />Normal</span>}
-                    </td>
-                  </tr>
-                )
-              })}
+            {stocks.map(s => (
+                <tr key={s.productoId}>
+                  <td><span style={{fontFamily:'monospace',fontSize:12,color:'var(--c-accent)'}}>{s.sku}</span></td>
+                  <td className="cell-primary">{s.nombre}</td>
+                  <td><input type="number" className="form-input" value={s.cantidad} min="0" onChange={e => set(s.productoId, e.target.value)} style={{padding:'5px 9px'}} /></td>
+                </tr>
+            ))}
             </tbody>
           </table>
-        )}
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onCerrar}>Cerrar</button>
+          <div className="modal-footer">
+            <button className="btn btn-secondary" onClick={onCerrar}>Cancelar</button>
+            <button className="btn btn-primary" onClick={() => onGuardar(stocks)}>Guardar cambios</button>
+          </div>
         </div>
       </div>
-    </div>
   )
 }
 
@@ -96,6 +68,8 @@ export default function OperadorPanel() {
   const [productos, setProductos] = useState([])
   const [sucursales, setSucursales] = useState([])
   const [stockSuc, setStockSuc] = useState([])
+  const [pedidos, setPedidos] = useState([])
+  const [envios, setEnvios] = useState([])
   const [cargando, setCargando] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [cat, setCat] = useState('TODAS')
@@ -104,31 +78,43 @@ export default function OperadorPanel() {
   const [modalInv, setModalInv] = useState(false)
   const [prodEdit, setProdEdit] = useState(null)
   const [modalStockEdit, setModalStockEdit] = useState(false)
-  const [modalStockVer, setModalStockVer] = useState(false)
-  const [prodStock, setProdStock] = useState(null)
 
   const sucursalAsignada = usuario?.sucursalId ? sucursales.find(s => s.id === usuario.sucursalId) : null
 
   const cargar = async () => {
     setCargando(true)
     try {
-      const [rp, rs] = await Promise.all([apiClient.get('/api/inventario'), apiClient.get('/api/sucursales')])
-      setProductos(rp.data); setSucursales(rs.data)
+      const [rp, rs, rpd, re] = await Promise.all([
+        apiClient.get('/api/inventario'),
+        apiClient.get('/api/sucursales'),
+        apiClient.get('/api/pedidos'),
+        apiClient.get('/api/envios'),
+      ])
+      setProductos(rp.data)
+      setSucursales(rs.data)
+      setPedidos(rpd.data || [])
+      setEnvios(re.data || [])
       if (usuario?.sucursalId) {
         const rStock = await apiClient.get(`/api/sucursales/${usuario.sucursalId}/stock`)
-        setStockSuc(rStock.data); setSucFiltro(String(usuario.sucursalId))
-      } else if (sucFiltro !== 'TODAS') {
-        const rStock = await apiClient.get(`/api/sucursales/${sucFiltro}/stock`)
         setStockSuc(rStock.data)
+        setSucFiltro(String(usuario.sucursalId))
       }
-    } catch { toast.error('Error al cargar') } finally { setCargando(false) }
+    } catch { toast.error('Error al cargar datos') }
+    finally { setCargando(false) }
   }
 
   useEffect(() => { cargar() }, [])
 
-  const cargarStock = async (id) => { try { const r = await apiClient.get(`/api/sucursales/${id}/stock`); setStockSuc(r.data) } catch { toast.error('Error') } }
+  const cargarStock = async (id) => {
+    try { const r = await apiClient.get(`/api/sucursales/${id}/stock`); setStockSuc(r.data) }
+    catch { toast.error('Error al cargar stock') }
+  }
 
-  const handleSucFiltro = (val) => { setSucFiltro(val); if (val !== 'TODAS') cargarStock(parseInt(val)); else setStockSuc([]) }
+  const handleSucFiltro = (val) => {
+    setSucFiltro(val)
+    if (val !== 'TODAS') cargarStock(parseInt(val))
+    else setStockSuc([])
+  }
 
   const prodsFiltrados = useMemo(() => {
     return productos.map(p => {
@@ -153,7 +139,8 @@ export default function OperadorPanel() {
 
   const eliminar = async (id) => {
     if (!confirm('¿Confirmas eliminar este producto?')) return
-    try { await apiClient.delete(`/api/inventario/${id}`); toast.success('Producto eliminado'); cargar() } catch { toast.error('Error al eliminar') }
+    try { await apiClient.delete(`/api/inventario/${id}`); toast.success('Eliminado'); cargar() }
+    catch { toast.error('Error') }
   }
 
   const guardarStock = async (stocks) => {
@@ -170,288 +157,316 @@ export default function OperadorPanel() {
   const sSin = productos.filter(p => p.cantidad === 0).length
 
   const getBadge = (c) => {
-    if (c === 0) return <span className="badge badge-red"><span className="badge-dot" />Sin stock</span>
-    if (c <= 5) return <span className="badge badge-yellow"><span className="badge-dot" />Bajo</span>
-    return <span className="badge badge-green"><span className="badge-dot" />Normal</span>
+    if (c === 0) return <span className="badge badge-red"><span className="badge-dot"/>Sin stock</span>
+    if (c <= 5) return <span className="badge badge-yellow"><span className="badge-dot"/>Bajo</span>
+    return <span className="badge badge-green"><span className="badge-dot"/>Normal</span>
   }
 
   const navItems = [
-    { key: 'dashboard', label: 'Dashboard', icon: <IconGrid /> },
-    { key: 'inventario', label: 'Inventario', icon: <IconBox /> },
-    { key: 'perfil', label: 'Mi perfil', icon: <IconUser /> }
+    { key: 'dashboard',   label: 'Dashboard',     icon: <IconGrid size={15}/> },
+    { key: 'inventario',  label: 'Inventario',     icon: <IconBox size={15}/> },
+    { key: 'pedidos',     label: 'Pedidos',        icon: <IconShoppingCart size={15}/> },
+    { key: 'envios',      label: 'Envíos',         icon: <IconTruck size={15}/> },
+    { key: 'sucursal',    label: 'Mi sucursal',    icon: <IconBuilding size={15}/> },
+    { key: 'perfil',      label: 'Mi perfil',      icon: <IconUser size={15}/> },
   ]
 
   return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <div className="sidebar-logo">
-            <div className="sidebar-logo-mark">SL</div>
-            SmartLogix
-          </div>
-        </div>
-        <div className="sidebar-user">
-          <div className="sidebar-user-name">{usuario?.nombre}</div>
-          <div className="sidebar-user-meta">{usuario?.cargo || usuario?.email}</div>
-          <div className="sidebar-user-pill">OPERADOR</div>
-          {sucursalAsignada && (
-            <div style={{ marginTop: 6, fontSize: 11, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 5 }}>
-              <IconBuilding size={11} /> {sucursalAsignada.nombre.replace('Sucursal ', '')}
+      <div className="app-layout">
+        <aside className="sidebar">
+          <div className="sidebar-brand">
+            <div className="sidebar-logo">
+              <div className="sidebar-logo-mark">SL</div>
+              SmartLogix
             </div>
-          )}
-        </div>
-        <nav className="sidebar-nav">
-          <div className="sidebar-section">Navegación</div>
-          {navItems.map(item => (
-            <button key={item.key} className={`sidebar-item ${seccion === item.key ? 'active' : ''}`} onClick={() => setSeccion(item.key)}>
-              <span className="sidebar-item-icon">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
-          {sucursalAsignada && (
-            <>
-              <div className="sidebar-divider" />
-              <div className="sidebar-section">Sucursal</div>
-              <button className="sidebar-item" onClick={() => setModalStockEdit(true)}>
-                <span className="sidebar-item-icon"><IconBuilding /></span>
-                Gestionar mi sucursal
-              </button>
-            </>
-          )}
-        </nav>
-        <div className="sidebar-footer">
-          <button className="sidebar-logout" onClick={() => { logout(); navigate('/login') }}>
-            <IconLogout size={14} /> Cerrar sesión
-          </button>
-        </div>
-      </aside>
-
-      <div className="app-content">
-        <div className="topbar">
-          <div className="topbar-breadcrumb">
-            <span>SmartLogix</span>
-            <span>/</span>
-            <span className="topbar-breadcrumb-active">{navItems.find(n => n.key === seccion)?.label}</span>
           </div>
-          <div className="topbar-actions">
-            <button className="btn btn-secondary btn-sm" onClick={cargar} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <IconRefresh size={13} /> Actualizar
+          <div className="sidebar-user">
+            <div className="sidebar-user-name">{usuario?.nombre}</div>
+            <div className="sidebar-user-meta">{usuario?.cargo || usuario?.email}</div>
+            <div className="sidebar-user-pill">OPERADOR</div>
+            {sucursalAsignada && (
+                <div style={{marginTop:6,fontSize:11,color:'rgba(255,255,255,0.4)',display:'flex',alignItems:'center',gap:5}}>
+                  <IconBuilding size={11}/> {sucursalAsignada.nombre}
+                </div>
+            )}
+          </div>
+          <nav className="sidebar-nav">
+            <div className="sidebar-section">Navegación</div>
+            {navItems.map(item => (
+                <button
+                    key={item.key}
+                    className={`sidebar-item${seccion === item.key ? ' sidebar-item-active' : ''}`}
+                    onClick={() => setSeccion(item.key)}
+                >
+                  <span className="sidebar-item-icon">{item.icon}</span>
+                  <span className="sidebar-item-label">{item.label}</span>
+                </button>
+            ))}
+          </nav>
+          <div className="sidebar-footer">
+            <button className="sidebar-item" onClick={() => navigate('/admin')}>
+              <span className="sidebar-item-icon"><IconGrid size={15}/></span>
+              <span className="sidebar-item-label">Volver al admin</span>
+            </button>
+            <button className="sidebar-item" onClick={() => { logout(); navigate('/login') }}>
+              <span className="sidebar-item-icon"><IconLogout size={15}/></span>
+              <span className="sidebar-item-label">Cerrar sesión</span>
             </button>
           </div>
-        </div>
+        </aside>
 
-        <main className="app-main">
-          {cargando ? <div className="loading-state"><span className="spinner spinner-lg" /><span>Cargando datos...</span></div> : (
-            <>
-              {/* DASHBOARD */}
-              {seccion === 'dashboard' && (
-                <div>
-                  <div className="page-header">
-                    <div className="page-title">Dashboard</div>
-                    <div className="page-desc">Estado actual del inventario y sucursales</div>
-                  </div>
-                  {sucursalAsignada && (
-                    <div className="alert alert-blue mb-4" style={{ marginBottom: 20 }}>
-                      <IconBuilding size={14} style={{ flexShrink: 0 }} />
-                      <span><strong>Sucursal asignada:</strong> {sucursalAsignada.nombre} — {sucursalAsignada.ciudad} · {sucursalAsignada.telefono}</span>
-                    </div>
-                  )}
-                  <div className="stat-row mb-6" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-                    <div className="stat-cell"><div className="stat-label">Productos</div><div className="stat-value">{productos.length}</div></div>
-                    <div className="stat-cell"><div className="stat-label">Con stock</div><div className="stat-value green">{productos.filter(p => p.cantidad > 5).length}</div></div>
-                    <div className="stat-cell"><div className="stat-label">Stock bajo</div><div className="stat-value yellow">{sBajo}</div></div>
-                    <div className="stat-cell"><div className="stat-label">Sin stock</div><div className="stat-value red">{sSin}</div></div>
-                    <div className="stat-cell"><div className="stat-label">Sucursales</div><div className="stat-value accent">{sucursales.filter(s => s.activa).length}</div></div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div className="card">
-                      <div className="card-header">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <IconWarning size={14} style={{ color: 'var(--c-red)' }} />
-                          <span className="card-title">Alertas de stock</span>
-                        </div>
-                        <button className="btn btn-secondary btn-xs" onClick={() => setSeccion('inventario')}>Ver inventario</button>
-                      </div>
-                      {productos.filter(p => p.cantidad <= 5).length === 0
-                        ? <div style={{ padding: '20px 18px', fontSize: 13, color: 'var(--c-text-3)' }}>Sin alertas — todo el inventario está en orden</div>
-                        : productos.filter(p => p.cantidad <= 5).slice(0, 5).map(p => (
-                          <div key={p.id} className="list-item">
-                            <div>
-                              <div className="list-item-primary">{p.nombre}</div>
-                              <div className="list-item-secondary" style={{ fontFamily: 'monospace', color: 'var(--c-accent)', fontSize: 11 }}>{p.sku}</div>
+        <div className="app-content">
+          <main className="app-main">
+            <div className="page-header">
+              <div>
+                <div className="page-breadcrumb">SmartLogix / {navItems.find(n => n.key === seccion)?.label}</div>
+                <h1 className="page-title">{navItems.find(n => n.key === seccion)?.label}</h1>
+              </div>
+              <button className="btn btn-secondary btn-sm" onClick={cargar}><IconRefresh size={13}/> Actualizar</button>
+            </div>
+
+            {cargando ? (
+                <div style={{textAlign:'center',padding:60,color:'var(--c-text-3)'}}>Cargando...</div>
+            ) : (
+                <>
+                  {/* ── DASHBOARD ── */}
+                  {seccion === 'dashboard' && (
+                      <div>
+                        {sucursalAsignada && (
+                            <div style={{background:'var(--c-accent-muted)',border:'1px solid var(--c-accent)',borderRadius:8,padding:'10px 14px',marginBottom:20,fontSize:13,color:'var(--c-accent)',display:'flex',alignItems:'center',gap:8}}>
+                              <IconBuilding size={14}/> <strong>Sucursal asignada:</strong> {sucursalAsignada.nombre} — {sucursalAsignada.ciudad}
                             </div>
-                            {getBadge(p.cantidad)}
-                          </div>
-                        ))}
-                    </div>
-                    <div className="card">
-                      <div className="card-header"><span className="card-title">Sucursales activas</span></div>
-                      {sucursales.filter(s => s.activa).map(s => (
-                        <div key={s.id} className="list-item">
-                          <div>
-                            <div className="list-item-primary">{s.nombre}</div>
-                            <div className="list-item-secondary">{s.ciudad}</div>
-                          </div>
-                          {s.id === usuario?.sucursalId
-                            ? <span className="badge badge-blue">Mi sucursal</span>
-                            : <span className="badge badge-green"><span className="badge-dot" />Activa</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* INVENTARIO */}
-              {seccion === 'inventario' && (
-                <div>
-                  <div className="page-header flex justify-between items-center">
-                    <div>
-                      <div className="page-title">Inventario</div>
-                      <div className="page-desc">{prodsFiltrados.length} de {productos.length} producto(s)</div>
-                    </div>
-                    <div className="flex gap-2">
-                      {sucursalAsignada && (
-                        <button className="btn btn-secondary" onClick={() => setModalStockEdit(true)}>
-                          <IconBuilding size={14} /> Gestionar mi sucursal
-                        </button>
-                      )}
-                      <button className="btn btn-primary" onClick={() => { setProdEdit(null); setModalInv(true) }}>
-                        <IconPlus size={14} /> Nuevo producto
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="filter-bar mb-4">
-                    <div className="filter-bar-grid" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
-                      <div>
-                        <label className="form-label">Buscar</label>
-                        <div style={{ position: 'relative' }}>
-                          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--c-text-3)', display: 'flex' }}>
-                            <IconSearch size={13} />
-                          </span>
-                          <input className="form-input" placeholder="Nombre o SKU..." value={busqueda}
-                            onChange={e => setBusqueda(e.target.value)} style={{ paddingLeft: 30 }} />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="form-label">Categoría</label>
-                        <select className="form-input" value={cat} onChange={e => setCat(e.target.value)}>
-                          {CATS.map(c => <option key={c} value={c}>{c === 'TODAS' ? 'Todas' : c.charAt(0) + c.slice(1).toLowerCase()}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">
-                          Sucursal {sucursalAsignada && <span style={{ color: 'var(--c-accent)', fontSize: 10 }}>· asignada</span>}
-                        </label>
-                        <select className="form-input" value={sucFiltro} onChange={e => handleSucFiltro(e.target.value)}>
-                          <option value="TODAS">Todas</option>
-                          {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre.replace('Sucursal ', '')}{s.id === usuario?.sucursalId ? ' ★' : ''}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="form-label">Estado</label>
-                        <select className="form-input" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value)}>
-                          <option value="TODOS">Todos</option>
-                          <option value="OK">Con stock</option>
-                          <option value="BAJO">Stock bajo</option>
-                          <option value="SIN">Sin stock</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="card">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>SKU</th><th>Nombre</th><th>Categoría</th><th>Precio</th>
-                          <th>Cantidad {sucFiltro !== 'TODAS' && <span style={{ color: 'var(--c-accent)', fontStyle: 'italic', textTransform: 'none' }}>sucursal</span>}</th>
-                          <th>Estado</th><th>Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {prodsFiltrados.length === 0
-                          ? <tr><td colSpan="7" style={{ textAlign: 'center', padding: '40px 0', color: 'var(--c-text-3)' }}>No se encontraron productos con los filtros aplicados</td></tr>
-                          : prodsFiltrados.map(p => (
-                            <tr key={p.id}>
-                              <td><span style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--c-accent)' }}>{p.sku}</span></td>
-                              <td>
-                                <div className="cell-primary">{p.nombre}</div>
-                                {p.descripcion && <div style={{ fontSize: 11, color: 'var(--c-text-4)', marginTop: 2 }}>{p.descripcion.slice(0, 45)}{p.descripcion.length > 45 ? '...' : ''}</div>}
-                              </td>
-                              <td><span className="badge badge-gray">{p.categoria}</span></td>
-                              <td style={{ fontWeight: 500 }}>${p.precio?.toLocaleString('es-CL')}</td>
-                              <td style={{ fontWeight: 700 }}>{p.cantMostrada}</td>
-                              <td>{getBadge(p.cantMostrada)}</td>
-                              <td>
-                                <div className="flex gap-2">
-                                  <button className="btn btn-secondary btn-sm" onClick={() => { setProdEdit(p); setModalInv(true) }}>
-                                    <IconEdit /> Editar
-                                  </button>
-                                  <button className="btn btn-danger-ghost btn-sm" onClick={() => eliminar(p.id)}>
-                                    <IconTrash /> Eliminar
-                                  </button>
-                                  <button className="btn btn-secondary btn-sm btn-icon" onClick={() => { setProdStock(p); setModalStockVer(true) }} title="Ver stock por sucursal">
-                                    <IconMapPin size={13} />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
+                        )}
+                        <div className="stat-row" style={{gridTemplateColumns:'repeat(4,1fr)',marginBottom:20}}>
+                          {[
+                            {label:'Productos',value:productos.length,color:'var(--c-accent)'},
+                            {label:'Stock bajo',value:sBajo,color:'#b45309'},
+                            {label:'Sin stock',value:sSin,color:'#dc2626'},
+                            {label:'Pedidos activos',value:pedidos.filter(p=>['PENDIENTE','CONFIRMADO','EN_PROCESO'].includes(p.estado)).length,color:'#2563eb'},
+                          ].map((s,i)=>(
+                              <div key={i} className="card" style={{padding:'16px 20px'}}>
+                                <div className="stat-label">{s.label}</div>
+                                <div className="stat-value" style={{color:s.color,fontSize:28,fontWeight:700}}>{s.value}</div>
+                              </div>
                           ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* PERFIL */}
-              {seccion === 'perfil' && (
-                <div>
-                  <div className="page-header">
-                    <div className="page-title">Mi perfil</div>
-                    <div className="page-desc">Información de tu cuenta en SmartLogix</div>
-                  </div>
-                  <div className="card" style={{ maxWidth: 540 }}>
-                    <div className="card-body">
-                      <div className="flex items-center gap-3" style={{ marginBottom: 22, paddingBottom: 18, borderBottom: '1px solid var(--c-border)' }}>
-                        <div className="profile-avatar">{usuario?.nombre?.charAt(0).toUpperCase()}</div>
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--c-text)' }}>{usuario?.nombre}</div>
-                          <div style={{ display: 'flex', gap: 6, marginTop: 5, flexWrap: 'wrap' }}>
-                            <span className="badge badge-gray">OPERADOR</span>
-                            {sucursalAsignada && <span className="badge badge-blue"><IconBuilding size={10} /> {sucursalAsignada.nombre.replace('Sucursal ', '')}</span>}
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                          <div className="card">
+                            <div className="card-header">
+                              <div className="card-title">⚠ Alertas de stock</div>
+                              <button className="btn btn-secondary btn-xs" onClick={()=>setSeccion('inventario')}>Ver inventario</button>
+                            </div>
+                            {productos.filter(p=>p.cantidad<=5).length===0
+                                ? <div style={{padding:'20px 18px',fontSize:13,color:'var(--c-text-3)'}}>Sin alertas activas — todo en stock</div>
+                                : productos.filter(p=>p.cantidad<=5).slice(0,6).map(p=>(
+                                    <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 18px',borderBottom:'1px solid var(--c-border)'}}>
+                                      <div>
+                                        <div style={{fontWeight:600,fontSize:13}}>{p.nombre}</div>
+                                        <div style={{fontFamily:'monospace',fontSize:11,color:'var(--c-accent)'}}>{p.sku}</div>
+                                      </div>
+                                      {getBadge(p.cantidad)}
+                                    </div>
+                                ))
+                            }
+                          </div>
+                          <div className="card">
+                            <div className="card-header">
+                              <div className="card-title">Pedidos recientes</div>
+                              <button className="btn btn-secondary btn-xs" onClick={()=>setSeccion('pedidos')}>Ver todos</button>
+                            </div>
+                            {pedidos.slice(0,5).map(p=>(
+                                <div key={p.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 18px',borderBottom:'1px solid var(--c-border)'}}>
+                                  <div>
+                                    <div style={{fontWeight:600,fontSize:13}}>{p.clienteNombre}</div>
+                                    <div style={{fontFamily:'monospace',fontSize:11,color:'var(--c-accent)'}}>{p.numeroPedido}</div>
+                                  </div>
+                                  <span className={`badge ${badgeEstadoPedido(p.estado)}`}><span className="badge-dot"/>{p.estado}</span>
+                                </div>
+                            ))}
+                            {pedidos.length===0 && <div style={{padding:'20px 18px',fontSize:13,color:'var(--c-text-3)'}}>Sin pedidos registrados</div>}
                           </div>
                         </div>
                       </div>
-                      {[
-                        { key: 'Correo electrónico', val: usuario?.email },
-                        { key: 'Cargo', val: usuario?.cargo },
-                        { key: 'Teléfono', val: usuario?.telefono },
-                        { key: 'RUT', val: usuario?.rut },
-                        { key: 'Dirección', val: usuario?.direccion },
-                        { key: 'Sucursal asignada', val: usuario?.sucursalNombre }
-                      ].map((item, i) => (
-                        <div key={i} className="profile-field">
-                          <span className="profile-field-key">{item.key}</span>
-                          <span className="profile-field-val">{item.val || <span style={{ color: 'var(--c-text-4)' }}>No especificado</span>}</span>
-                        </div>
-                      ))}
-                      <div style={{ marginTop: 14, fontSize: 12, color: 'var(--c-text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        Para actualizar tu información, contacta al administrador.
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </main>
-      </div>
+                  )}
 
-      {modalInv && <InventarioForm producto={prodEdit} onGuardar={guardar} onCerrar={() => { setModalInv(false); setProdEdit(null) }} />}
-      {modalStockEdit && sucursalAsignada && <ModalStockEdit sucursal={sucursalAsignada} productos={productos} stockActual={stockSuc} onGuardar={guardarStock} onCerrar={() => setModalStockEdit(false)} />}
-      {modalStockVer && prodStock && <ModalStockVer producto={prodStock} sucursales={sucursales} onCerrar={() => { setModalStockVer(false); setProdStock(null) }} />}
-    </div>
+                  {/* ── INVENTARIO ── */}
+                  {seccion === 'inventario' && (
+                      <div>
+                        <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
+                          <input className="form-input" style={{width:200,padding:'6px 10px',fontSize:12}} placeholder="Buscar nombre o SKU..." value={busqueda} onChange={e=>setBusqueda(e.target.value)}/>
+                          <select className="form-input" style={{padding:'6px 10px',fontSize:12}} value={cat} onChange={e=>setCat(e.target.value)}>
+                            {CATS.map(c=><option key={c} value={c}>{c==='TODAS'?'Todas categorías':c.charAt(0)+c.slice(1).toLowerCase()}</option>)}
+                          </select>
+                          <select className="form-input" style={{padding:'6px 10px',fontSize:12}} value={sucFiltro} onChange={e=>handleSucFiltro(e.target.value)}>
+                            <option value="TODAS">Todas las sucursales</option>
+                            {sucursales.map(s=><option key={s.id} value={s.id}>{s.nombre}{s.id===usuario?.sucursalId?' ★':''}</option>)}
+                          </select>
+                          <select className="form-input" style={{padding:'6px 10px',fontSize:12}} value={estadoFiltro} onChange={e=>setEstadoFiltro(e.target.value)}>
+                            <option value="TODOS">Todo el stock</option>
+                            <option value="OK">Con stock</option>
+                            <option value="BAJO">Stock bajo</option>
+                            <option value="SIN">Sin stock</option>
+                          </select>
+                          <button className="btn btn-primary btn-sm" onClick={()=>{setProdEdit(null);setModalInv(true)}}><IconPlus size={13}/> Nuevo producto</button>
+                        </div>
+                        <div className="card">
+                          <table className="data-table">
+                            <thead><tr><th>SKU</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Cantidad</th><th>Estado</th><th>Acciones</th></tr></thead>
+                            <tbody>
+                            {prodsFiltrados.length===0
+                                ? <tr><td colSpan={7} style={{textAlign:'center',padding:32,color:'var(--c-text-3)'}}>Sin resultados</td></tr>
+                                : prodsFiltrados.map(p=>(
+                                    <tr key={p.id}>
+                                      <td><span style={{fontFamily:'monospace',fontSize:12,color:'var(--c-accent)'}}>{p.sku}</span></td>
+                                      <td><div className="cell-primary">{p.nombre}</div></td>
+                                      <td><span className="badge badge-gray">{p.categoria}</span></td>
+                                      <td>${p.precio?.toLocaleString('es-CL')}</td>
+                                      <td style={{fontWeight:700}}>{p.cantMostrada}</td>
+                                      <td>{getBadge(p.cantMostrada)}</td>
+                                      <td><div style={{display:'flex',gap:4}}>
+                                        <button className="btn btn-secondary btn-xs" onClick={()=>{setProdEdit(p);setModalInv(true)}}><IconEdit/>Editar</button>
+                                        <button className="btn btn-danger-ghost btn-xs" onClick={()=>eliminar(p.id)}><IconTrash/></button>
+                                      </div></td>
+                                    </tr>
+                                ))
+                            }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                  )}
+
+                  {/* ── PEDIDOS ── */}
+                  {seccion === 'pedidos' && (
+                      <div className="card">
+                        <table className="data-table">
+                          <thead><tr><th>N° Pedido</th><th>Cliente</th><th>Dirección</th><th>Total</th><th>Estado</th><th>Fecha</th></tr></thead>
+                          <tbody>
+                          {pedidos.length===0
+                              ? <tr><td colSpan={6} style={{textAlign:'center',padding:32,color:'var(--c-text-3)'}}>Sin pedidos</td></tr>
+                              : pedidos.map(p=>(
+                                  <tr key={p.id}>
+                                    <td><span className="cell-mono">{p.numeroPedido}</span></td>
+                                    <td><div className="cell-primary">{p.clienteNombre}</div><div className="cell-muted">{p.clienteEmail}</div></td>
+                                    <td><div className="cell-muted" style={{maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.direccionEntrega}</div></td>
+                                    <td><span className="cell-primary">${Number(p.total||0).toLocaleString('es-CL')}</span></td>
+                                    <td><span className={`badge ${badgeEstadoPedido(p.estado)}`}><span className="badge-dot"/>{p.estado}</span></td>
+                                    <td><span className="cell-muted">{p.fechaPedido?new Date(p.fechaPedido).toLocaleDateString('es-CL'):'-'}</span></td>
+                                  </tr>
+                              ))
+                          }
+                          </tbody>
+                        </table>
+                      </div>
+                  )}
+
+                  {/* ── ENVÍOS ── */}
+                  {seccion === 'envios' && (
+                      <div className="card">
+                        <table className="data-table">
+                          <thead><tr><th>Código</th><th>Transportista</th><th>Destino</th><th>Estado</th><th>F. Estimada</th></tr></thead>
+                          <tbody>
+                          {envios.length===0
+                              ? <tr><td colSpan={5} style={{textAlign:'center',padding:32,color:'var(--c-text-3)'}}>Sin envíos</td></tr>
+                              : envios.map(e=>(
+                                  <tr key={e.id}>
+                                    <td><span className="cell-mono">{e.codigoSeguimiento}</span></td>
+                                    <td>{e.transportista}</td>
+                                    <td><div className="cell-muted" style={{maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.direccionDestino}</div></td>
+                                    <td><span className={`badge ${badgeEstadoEnvio(e.estado)}`}><span className="badge-dot"/>{e.estado}</span></td>
+                                    <td><span className="cell-muted">{e.fechaEntregaEstimada?new Date(e.fechaEntregaEstimada).toLocaleDateString('es-CL'):'-'}</span></td>
+                                  </tr>
+                              ))
+                          }
+                          </tbody>
+                        </table>
+                      </div>
+                  )}
+
+                  {/* ── MI SUCURSAL ── */}
+                  {seccion === 'sucursal' && (
+                      <div>
+                        {!sucursalAsignada
+                            ? <div className="card" style={{padding:32,textAlign:'center',color:'var(--c-text-3)'}}>No tienes una sucursal asignada. Contacta al administrador.</div>
+                            : (
+                                <>
+                                  <div className="card" style={{padding:'20px 24px',marginBottom:16}}>
+                                    <div style={{fontWeight:700,fontSize:16,marginBottom:8}}>{sucursalAsignada.nombre}</div>
+                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:13,color:'var(--c-text-2)'}}>
+                                      <div><strong>Ciudad:</strong> {sucursalAsignada.ciudad}</div>
+                                      <div><strong>Teléfono:</strong> {sucursalAsignada.telefono}</div>
+                                      <div><strong>Dirección:</strong> {sucursalAsignada.direccion}</div>
+                                      <div><strong>Estado:</strong> {sucursalAsignada.activa ? '✅ Activa' : '❌ Inactiva'}</div>
+                                    </div>
+                                    <button className="btn btn-primary btn-sm" style={{marginTop:16}} onClick={()=>setModalStockEdit(true)}>
+                                      <IconBox size={13}/> Gestionar stock
+                                    </button>
+                                  </div>
+                                  <div className="card">
+                                    <div className="card-header"><div className="card-title">Stock actual</div></div>
+                                    <table className="data-table">
+                                      <thead><tr><th>SKU</th><th>Producto</th><th>Cantidad</th><th>Estado</th></tr></thead>
+                                      <tbody>
+                                      {stockSuc.length===0
+                                          ? <tr><td colSpan={4} style={{textAlign:'center',padding:32,color:'var(--c-text-3)'}}>Sin stock registrado</td></tr>
+                                          : stockSuc.map(s=>(
+                                              <tr key={s.producto?.id}>
+                                                <td><span style={{fontFamily:'monospace',fontSize:12,color:'var(--c-accent)'}}>{s.producto?.sku}</span></td>
+                                                <td className="cell-primary">{s.producto?.nombre}</td>
+                                                <td style={{fontWeight:700}}>{s.cantidad}</td>
+                                                <td>{getBadge(s.cantidad)}</td>
+                                              </tr>
+                                          ))
+                                      }
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </>
+                            )
+                        }
+                      </div>
+                  )}
+
+                  {/* ── PERFIL ── */}
+                  {seccion === 'perfil' && (
+                      <div className="card" style={{maxWidth:500,padding:'24px'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:20,paddingBottom:20,borderBottom:'1px solid var(--c-border)'}}>
+                          <div style={{width:56,height:56,borderRadius:'50%',background:'var(--c-accent)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700,color:'#fff'}}>
+                            {usuario?.nombre?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{fontWeight:700,fontSize:16}}>{usuario?.nombre}</div>
+                            <span className="badge badge-gray" style={{marginTop:4}}>OPERADOR</span>
+                            {sucursalAsignada && <span className="badge badge-blue" style={{marginLeft:6}}>{sucursalAsignada.nombre}</span>}
+                          </div>
+                        </div>
+                        {[
+                          {label:'Correo electrónico', value:usuario?.email},
+                          {label:'Cargo',              value:usuario?.cargo},
+                          {label:'Teléfono',           value:usuario?.telefono},
+                          {label:'RUT',                value:usuario?.rut},
+                          {label:'Dirección',          value:usuario?.direccion},
+                          {label:'Sucursal asignada',  value:sucursalAsignada?.nombre},
+                        ].map((item,i)=>(
+                            <div key={i} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid var(--c-border)',fontSize:13}}>
+                              <span style={{color:'var(--c-text-3)',fontWeight:500}}>{item.label}</span>
+                              <span style={{color:'var(--c-text)',fontWeight:600}}>{item.value || <span style={{color:'var(--c-text-4)'}}>No especificado</span>}</span>
+                            </div>
+                        ))}
+                        <div style={{marginTop:16,fontSize:12,color:'var(--c-text-3)'}}>
+                          Para actualizar tu información, contacta al administrador.
+                        </div>
+                      </div>
+                  )}
+                </>
+            )}
+          </main>
+        </div>
+
+        {modalInv && <InventarioForm producto={prodEdit} onGuardar={guardar} onCerrar={()=>{setModalInv(false);setProdEdit(null)}} />}
+        {modalStockEdit && sucursalAsignada && (
+            <ModalStockEdit sucursal={sucursalAsignada} productos={productos} stockActual={stockSuc} onGuardar={guardarStock} onCerrar={()=>setModalStockEdit(false)} />
+        )}
+      </div>
   )
 }
